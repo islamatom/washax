@@ -1,11 +1,12 @@
 <?php
 // Washax · e-mails clients (bibliothèque commune)
-const WX_EXP    = 'contact@washax.com';
+const WX_EXP    = 'info@washax.com';
 const WX_NOM    = 'Washax';
-const WX_PATRON = '';                 // e-mail du patron — à remplir quand on l'a
+const WX_PATRON = 'info@washax.com';  // boîte pro du patron
+const WX_PATRON_PRIVE = 'hanchiraxel59@gmail.com'; // copie des alertes sur son adresse privée
 const WX_TEL    = '04XX XX XX XX';    // numéro du patron — à remplir
 const WX_WA     = '32000000000';      // WhatsApp du patron (format 32…) — à remplir
-const WX_BOITE  = '';                 // id de la boîte Hostinger (si on crée contact@washax.com)
+const WX_BOITE  = 'ACf396bd7d973a3415966174a17d5c'; // boîte info@washax.com
 const WX_SITE   = 'https://washax.com';
 
 function wx_h($s, $max = 80) { return htmlspecialchars(mb_substr(trim((string)$s), 0, $max), ENT_QUOTES, 'UTF-8'); }
@@ -27,6 +28,10 @@ function wx_cadre($corps) {
   . '<a href="' . WX_SITE . '" style="color:#f37021;text-decoration:none;font-weight:700">washax.com</a></td></tr></table></body></html>';
 }
 function wx_envoyer($to, $sujet, $html) {
+  if ($to === WX_PATRON && WX_PATRON_PRIVE) { $a = wx_envoyer1(WX_PATRON, $sujet, $html); $b = wx_envoyer1(WX_PATRON_PRIVE, $sujet, $html); return $a || $b; }
+  return wx_envoyer1($to, $sujet, $html);
+}
+function wx_envoyer1($to, $sujet, $html) {
   if (!filter_var($to, FILTER_VALIDATE_EMAIL) || preg_match('/@example\.com$/i', $to)) return false;
   $corps = wx_cadre($html);
   $cle = trim((string)@file_get_contents(__DIR__ . '/data/mailapi.key'));
