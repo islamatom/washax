@@ -6,7 +6,7 @@
 <title>Washax · Lavage auto à domicile</title>
 <meta name="theme-color" content="#0a0a0a">
 <link rel="icon" type="image/png" href="icone-48.png"><link rel="apple-touch-icon" href="icone-180.png">
-<meta property="og:title" content="Washax · Lavage auto de luxe à domicile"><meta property="og:description" content="Réservez votre lavage en ligne : on vient chez vous avec la camionnette Washax."><meta property="og:image" content="https://islamatom.github.io/washax/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="Washax · Lavage auto de luxe à domicile"><meta property="og:description" content="Réservez votre lavage en ligne : on vient chez vous avec la camionnette Washax."><meta property="og:image" content="https://washax.com/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">
 
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
@@ -395,6 +395,10 @@ let RDV=[];try{RDV=JSON.parse(localStorage.getItem('wx_rdv')||'null')}catch(e){}
 if(!RDV){const t=new Date(),d=n=>{const x=new Date(t);x.setDate(t.getDate()+n);if(x.getDay()==0)x.setDate(x.getDate()+1);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};RDV=[{id:1,nom:'Sarah Lambert',tel:'0478 22 15 90',adr:'Rue du Pont 4, Namur',v:'Voiture',m:'Mercedes',f:0,d:d(1),h:600,st:'att',pay:'ligne'},{id:2,nom:'Youssef Amrani',tel:'0485 63 21 07',adr:'Av. Roi Albert 18, Andenne',v:'Voiture',m:'Porsche',f:3,d:d(3),h:540,st:'ok',pay:'place'},{id:3,nom:'Marc Dubois',tel:'0496 10 44 32',adr:'Chaussée de Liège 77, Huy',v:'Camionnette',m:'Volkswagen',f:2,d:d(5),h:840,st:'ok'}]}
 function sauve(){try{localStorage.setItem('wx_rdv',JSON.stringify(RDV))}catch(e){}}
 let FER=[];try{FER=JSON.parse(localStorage.getItem('wx_fer')||'[]')}catch(e){}
+const WXAPI='api.php';RDV=[];FER=[];
+const FI={'Complet int. + ext.':0,'Intérieur':1,'Extérieur':2,'Remise à neuf':3,"Retour d'usine":4};
+function chargePris(){return fetch(WXAPI+'?f=pris',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(!d||!d.ok)return;RDV=d.pris.map((p,i)=>({id:i,d:p.date,h:+p.heure.slice(0,2)*60+ +p.heure.slice(3,5),f:FI[p.type]??0,st:'att'}));FER=d.fermes||[]}).catch(()=>{})}
+chargePris();
 function sauveF(){try{localStorage.setItem('wx_fer',JSON.stringify(FER))}catch(e){}}
 let AV=new Date(),AS=null,AF=0;AV=new Date(AV.getFullYear(),AV.getMonth(),1);
 let cd='',TB='dem',PH=[],SMS=100;try{SMS=+(localStorage.getItem('wx_sms')??100)}catch(e){}
@@ -454,12 +458,16 @@ const MQ=["Abarth", "Alfa Romeo", "Alpine", "Aston Martin", "Audi", "Bentley", "
 let R={},E=0;const ICV=`<svg viewBox="0 0 64 40" fill="none" stroke-width="2"><path d="M4 28c0-4 2-6 6-7l12-2c4-5 9-8 16-8 7 0 12 4 16 9l4 1c2 1 3 3 3 6v1H4z" stroke="url(#ag)"/><path d="M8 25h50" stroke="#F37021"/><circle cx="16" cy="30" r="5" stroke="url(#ag)" fill="var(--card)"/><circle cx="48" cy="30" r="5" stroke="url(#ag)" fill="var(--card)"/></svg>`,ICC=`<svg viewBox="0 0 64 40" fill="none" stroke-width="2"><path d="M4 30V12c0-2 1-4 4-4h32c4 0 7 2 10 6l7 7c2 1 3 3 3 5v4z" stroke="url(#ag)"/><path d="M42 11h4l7 8H42z" stroke="url(#ag)"/><path d="M6 24h54" stroke="#F37021"/><circle cx="16" cy="31" r="5" stroke="url(#ag)" fill="var(--card)"/><circle cx="48" cy="31" r="5" stroke="url(#ag)" fill="var(--card)"/></svg>`;
 function hm(m){return Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'')}
 function hh(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')}
-function ouvreRes(f){R={};E=0;if(f!=null)R.f=f;document.getElementById('res').classList.add('on');document.body.style.overflow='hidden';rend()}
+function ouvreRes(f){R={};E=0;if(f!=null)R.f=f;document.getElementById('res').classList.add('on');document.body.style.overflow='hidden';rend();chargePris().then(()=>{if(E==3)rend()})}
 function fermeRes(){document.getElementById('res').classList.remove('on');document.body.style.overflow=''}
 function retour(){if(E>0&&E<6){E--;rend()}else fermeRes()}
 function choix(k,v){R[k]=v;rend();if(k=='d')setTimeout(()=>{const l=document.querySelector('#rb .lbl');l&&l.scrollIntoView({behavior:'smooth',block:'start'})},60);if(k!='h'&&k!='d')setTimeout(suite,250)}
 function valide(){return [R.v,R.m,R.f!=null,R.d&&R.h!=null,R.pre&&R.nom&&R.tel&&R.adr,1,1][E]}
-function suite(){if(!valide())return;if(E==5){RDV.unshift({id:Date.now(),nom:R.pre+' '+R.nom,tel:R.tel,adr:R.adr,v:R.v,m:R.m,f:R.f,d:R.d,h:R.h,st:'att',note:R.note||'',prix:F[R.f][3],pay:R.pay||'ligne'});sauve();try{localStorage.setItem('ra_demo_rdv',JSON.stringify({prenom:R.pre,nom:R.nom,tel:R.tel,email:R.mail||'',type:F[R.f][0]=='Complet intérieur + extérieur'?'Complet int. + ext.':F[R.f][0],date:R.d,heure:hh(R.h).padStart(5,'0'),message:`🚗 ${R.v} ${R.m} · 📍 ${R.adr}${R.note?' · '+R.note:''} · ${(R.pay||'ligne')=='ligne'?'💳 payé en ligne '+F[R.f][3]+' €':'💶 '+F[R.f][3]+' € à payer sur place'}`}))}catch(e){}E=6;rend();fete();return}if(E==6){fermeRes();return}E++;rend()}
+function suite(){if(!valide())return;if(E==5){if(R.envoi)return;R.envoi=1;const ty=F[R.f][0]=='Complet intérieur + extérieur'?'Complet int. + ext.':F[R.f][0],pay=(R.pay||'ligne')=='ligne'?'💳 paiement en ligne':'💶 paiement sur place';
+const bt=document.querySelector('#res .b1');if(bt){bt.dataset.t=bt.textContent;bt.textContent='Envoi…'}
+fetch(WXAPI,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({f:'demande',prenom:R.pre,nom:R.nom,tel:R.tel,email:R.mail||'',type:ty,date:R.d,heure:hh(R.h).padStart(5,'0'),voiture:R.v+' '+R.m,adresse:R.adr,prix:F[R.f][3]+' €',message:`🚗 ${R.v} ${R.m} · 📍 ${R.adr}${R.note?' · '+R.note:''} · ${pay} ${F[R.f][3]} €`})}).then(r=>r.json()).catch(()=>({ok:false,erreur:'Pas de connexion, réessayez'})).then(d=>{R.envoi=0;if(bt)bt.textContent=bt.dataset.t;
+if(!d.ok){toast(d.erreur||'Oups, réessayez');if(/créneau|fermé/.test(d.erreur||'')){R.h=null;E=3;chargePris().then(rend)}return}
+E=6;rend();fete()});return}if(E==6){fermeRes();return}E++;rend()}
 const TR=30;
 function libres(k,du){const x=new Date(k);if(x.getDay()==0||(typeof FER!='undefined'&&FER.includes(k)))return null;const occ=RDV.filter(r=>r.d==k&&r.st!='ref'),L=[];for(let m=480;m+du<=1140;m+=30)L.push([m,occ.some(r=>m<r.h+F[r.f][1]+TR&&r.h<m+du+TR)]);return L}
 const iso=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');

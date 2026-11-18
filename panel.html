@@ -264,7 +264,7 @@ body,button,input,select,textarea{font-family:'Montserrat',sans-serif!important}
 <script>
 // ================= VERSION EN LIGNE =================
 // Laisser vide = aperçu (démo). Mettre l'adresse de la fonction Supabase = vrai panel.
-const RA_API='';
+const RA_API='api.php';
 const LIVE=!!RA_API;
 const SRC=x=>!x?'':typeof x==='string'?x:URL.createObjectURL(x);
 let _nid=0;const nid=()=>{let n=Date.now()*100+Math.floor(Math.random()*100);if(n<=_nid)n=_nid+1;_nid=n;return n};
