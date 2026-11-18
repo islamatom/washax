@@ -82,6 +82,13 @@ function wx_mail($type, $d) {
         $titre('😕', "Désolé, $prenom", 'Votre rendez-vous ne peut malheureusement pas avoir lieu' . ($raison ? " ($raison)" : '') . '.')
         . $carte('RDV ANNULÉ')
         . '<tr><td style="padding:0 24px 22px;text-align:center"><a href="' . WX_SITE . '" style="display:inline-block;background:#f37021;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:15px 26px;border-radius:12px">📅 Reprendre un RDV</a></td></tr>');
+    case 'patron_ok':
+      if (!WX_PATRON) return false;
+      return wx_envoyer(WX_PATRON, '✅ RDV confirmé : ' . strip_tags($prenom) . " · $dateTxt " . ($d['heure'] ?? ''),
+        "<tr><td style=\"padding:26px 24px;text-align:center\"><h1 style=\"margin:0 0 8px;font-size:22px;color:#111\">✅ Vous avez confirmé ce RDV</h1>"
+        . "<p style=\"font-size:16px;color:#111;line-height:1.8\"><b>$prenom</b>" . ($tel ? " · 📞 $tel" : '') . "<br>$details<br>📅 <b>$dateTxt à $heure</b></p>"
+        . '<p style="font-size:13px;color:#555">' . (($d['email'] ?? '') ? 'Le client a reçu son e-mail de confirmation.' : 'Le client n’a pas d’e-mail : pensez au WhatsApp.') . '</p>'
+        . '<a href="' . WX_SITE . '/panel.html" style="display:inline-block;background:#f37021;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:12px">Ouvrir mon panel</a></td></tr>');
     case 'patron':
       if (!WX_PATRON) return false;
       return wx_envoyer(WX_PATRON, '🔔 Nouvelle demande : ' . strip_tags($prenom) . " · $dateTxt " . ($d['heure'] ?? ''),

@@ -430,16 +430,20 @@ function fermer(){$('#ov').classList.remove('open')}
 $('#ov').onclick=e=>{if(e.target.id==='ov')fermer()};
 
 function apercuMessages(r,titre,smsTxt,mailTitre,mailTxt,apres){const c=getC(r.cid);
+  const n=(()=>{let x=String(c.tel||'').replace(/\D/g,'');if(x.startsWith('00'))x=x.slice(2);if(x.startsWith('0'))x='32'+x.slice(1);return x})();
+  const mail=c.email&&c.email!=='—';
   ouvrir(`<h3>${titre}</h3>
-  <div class="lbl">SMS envoyé au ${esc(c.tel)}</div><div class="phone"><div class="who">Washax</div><div class="bulle">${esc(smsTxt)}</div></div>
-  <div class="envoye" id="env">${LIVE?'Envoi du SMS…':'✓ SMS envoyé à '+esc(c.prenom)}</div>
-  ${LIVE?'':'<div class="demo-note">APERÇU · aucun message réellement envoyé</div>'}
-  <button class="b b-rose" style="width:100%;margin-top:14px" onclick="fermer()">Parfait</button>`);S.credits=Math.max(0,(S.credits||0)-1);majCred();
-  if(LIVE){RA_sync().then(()=>API('sms',{envois:[{tel:c.tel,texte:smsTxt}]})).then(d=>{const e=$('#env');if(!e)return;e.textContent=d&&d.envoyes?'✓ SMS envoyé à '+c.prenom:'⚠ SMS non envoyé : '+((d&&(d.raison||d.erreur))||'pas de connexion')+'. Appelez-la ☏';if(!(d&&d.envoyes))e.style.background='#FBE3DF',e.style.color='#9A3B2E';e.classList.add('on');apres&&apres()}).catch(()=>{const e=$('#env');if(e){e.textContent='⚠ Pas de connexion : SMS non envoyé';e.classList.add('on')}});return}
-  setTimeout(()=>{$('#env')&&$('#env').classList.add('on');apres&&apres()},700)}
-
+  <div class="lbl">Message prêt pour ${esc(c.prenom)} · ${esc(c.tel)}</div><div class="phone"><div class="who">Washax</div><div class="bulle">${esc(smsTxt)}</div></div>
+  <a class="b" style="display:block;width:100%;margin-top:12px;text-align:center;text-decoration:none;background:#25D366;color:#fff;font-weight:700" target="_blank" href="https://wa.me/${n}?text=${encodeURIComponent(smsTxt)}" onclick="(R.find(x=>x.id===${r.id})||{}).waOk=1">💬 Envoyer sur WhatsApp</a>
+  <button class="b b-line" style="width:100%;margin-top:8px" id="smsBt" onclick="envSms(${r.id})">✉ Envoyer par SMS (1 crédit · il vous en reste ${S.credits||0})</button>
+  <div class="envoye on" id="env" style="margin-top:10px">${mail?'✉ E-mail de confirmation envoyé à '+esc(c.email):'Pas d’e-mail pour ce client : envoyez-lui le WhatsApp 👆'}</div>
+  <button class="b b-rose" style="width:100%;margin-top:14px" onclick="fermer()">Fermer</button>`);
+  if(LIVE)RA_sync();apres&&apres();window._smsTxt=smsTxt}
+function envSms(id){const r=R.find(x=>x.id===id),c=getC(r.cid),bt=$('#smsBt');if((S.credits||0)<1){toast('⚠ Plus de crédits SMS : utilisez WhatsApp');return}
+  if(!LIVE){S.credits--;majCred();bt.textContent='✓ SMS envoyé';bt.disabled=true;return}
+  bt.disabled=true;bt.textContent='Envoi du SMS…';API('sms',{envois:[{tel:c.tel,texte:window._smsTxt||''}]}).then(d=>{if(d&&typeof d.credits==='number'){S.credits=d.credits;majCred()}bt.textContent=d&&d.envoyes?'✓ SMS envoyé':'⚠ SMS non envoyé : '+((d&&(d.raison||d.erreur))||'erreur')}).catch(()=>{bt.textContent='⚠ Pas de connexion'})}
 function valider(id){const r=R.find(x=>x.id===id);const c=getC(r.cid);
-  const go2=()=>{r.statut='confirme';render();apercuMessages(r,'RDV confirmé ✦',fill(S.sms,r),'Votre rendez-vous est confirmé',fill(S.mail,r),()=>coeurs(innerWidth/2,innerHeight*.3,50))};
+  const go2=()=>{r.statut='confirme';render();apercuMessages(r,'RDV confirmé ✦',fill(S.sms,r),'Votre rendez-vous est confirmé',fill(S.mail,r))};
   if(c.statut==='mauvais'){ouvrir(`<h3>⚠ Mauvais client</h3><p style="line-height:1.6">${esc(c.prenom)} ${esc(c.nom)} est marquée comme mauvais client :<br><b>${esc(c.note||'—')}</b></p><p style="margin-top:10px;color:var(--ink2)">Voulez-vous quand même confirmer son RDV ?</p>
     <div class="acts"><button class="b b-bad" onclick="fermer();annuler(${id})">Refuser</button><button class="b b-ok" id="force">Confirmer quand même</button></div>`);$('#force').onclick=go2}
   else go2()}
@@ -467,7 +471,7 @@ function annuler(id){const r=R.find(x=>x.id===id);const c=getC(r.cid);const att=
   $('#mb').onclick=e=>e.target.classList.toggle('on');
   $('#ac').onclick=()=>{const txt=$('#rzt').value.trim()||raison;if($('#mb').classList.contains('on')){c.statut='mauvais';c.note=c.note||txt}
     r.statut='annule';render();
-    apercuMessages(r,att?'Demande refusée':'RDV annulé',`Bonjour ${c.prenom}, nous sommes désolées : votre RDV du ${fmtL(r.date)} à ${r.heure} ne peut pas avoir lieu (${txt.toLowerCase()}). Reprenez un RDV quand vous voulez sur notre site. Washax ✦`,'À propos de votre rendez-vous',`Bonjour ${c.prenom},\n\nNous sommes désolées, votre rendez-vous du ${fmtL(r.date)} à ${r.heure} ne peut pas avoir lieu.\nRaison : ${txt}\n\nVous pouvez reprendre un rendez-vous à tout moment sur notre site.\n\nAvec toute ma douceur,\nWashax ✦`)}}
+    apercuMessages(r,att?'Demande refusée':'RDV annulé',`Bonjour ${c.prenom}, nous sommes désolés : votre RDV du ${fmtL(r.date)} à ${r.heure} ne peut pas avoir lieu (${txt.toLowerCase()}). Reprenez un RDV quand vous voulez sur notre site. Washax ✦`,'À propos de votre rendez-vous',`Bonjour ${c.prenom},\n\nNous sommes désolées, votre rendez-vous du ${fmtL(r.date)} à ${r.heure} ne peut pas avoir lieu.\nRaison : ${txt}\n\nVous pouvez reprendre un rendez-vous à tout moment sur notre site.\n\nAvec toute ma douceur,\nWashax ✦`)}}
 
 function presence(id,st){const r=R.find(x=>x.id===id);r.statut=st;const c=getC(r.cid);
   if(st==='absente'){const n=R.filter(x=>x.cid===c.id&&x.statut==='absente').length;
@@ -680,7 +684,7 @@ function editAuto(k,nom){ouvrir(`<h3>SMS · ${nom}</h3><textarea class="inp" id=
 
 /* ---------- PARRAINAGE ---------- */
 function envoyerCode(id){const c=getC(id);const r={cid:id,date:T,heure:'',type:''};
-  apercuMessages(r,'Code de parrainage',`Bonjour ${c.prenom} ✦ Une amie va se marier ? Qu'elle donne votre numéro (${c.tel}) en prenant RDV chez Washax : elle reçoit ${S.cadeauFilleule.toLowerCase()} et vous ${S.cadeauMarraine.toLowerCase()} ! Washax`,'Votre code de parrainage',`Bonjour ${c.prenom},\n\nMerci pour votre confiance ✦\nUne amie va se marier ? Qu'elle donne votre numéro (${c.tel}) en prenant rendez-vous sur notre site :\n· elle reçoit ${S.cadeauFilleule.toLowerCase()}\n· vous recevez ${S.cadeauMarraine.toLowerCase()}\n\nAvec toute ma douceur,\nWashax ✦`)}
+  apercuMessages(r,'Code de parrainage',`Bonjour ${c.prenom} ✦ Un ami veut une voiture toute propre ? Qu'il donne votre numéro (${c.tel}) en prenant RDV chez Washax : il reçoit ${S.cadeauFilleule.toLowerCase()} et vous ${S.cadeauMarraine.toLowerCase()} ! Washax`,'Votre code de parrainage',`Bonjour ${c.prenom},\n\nMerci pour votre confiance ✦\nUne amie va se marier ? Qu'elle donne votre numéro (${c.tel}) en prenant rendez-vous sur notre site :\n· elle reçoit ${S.cadeauFilleule.toLowerCase()}\n· vous recevez ${S.cadeauMarraine.toLowerCase()}\n\nAvec toute ma douceur,\nWashax ✦`)}
 function vParrain(){fermer();
   const top=C.map(c=>({c,n:C.filter(x=>x.par===c.id).length})).filter(o=>o.n).sort((a,b)=>b.n-a.n);
   const tot=C.filter(c=>c.par).length;

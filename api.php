@@ -127,7 +127,8 @@ if ($f === 'sync') {
   $db['R'] = array_values(array_filter($db['R'], fn($r) => ($r['date'] ?? '9') >= $lim));
   db_fermer($h, $db);
   foreach ($mails as [$quoi, $r]) { $c = null; foreach ($db['C'] as $x) if ($x['id'] == $r['cid']) { $c = $x; break; }
-    if ($c) wx_mail($quoi, ['prenom' => $c['prenom'], 'email' => $c['email'] ?? '', 'formule' => $r['type'], 'date' => $r['date'], 'heure' => $r['heure'], 'raison' => $r['raison'] ?? '']); }
+    if ($c) { $m = ['prenom' => $c['prenom'], 'email' => $c['email'] ?? '', 'tel' => $c['tel'] ?? '', 'formule' => $r['type'], 'date' => $r['date'], 'heure' => $r['heure'], 'raison' => $r['raison'] ?? '', 'prix' => $r['prix'] ?? ''];
+      wx_mail($quoi, $m); if ($quoi === 'confirme') wx_mail('patron_ok', $m); } }
   sortie(['ok' => true]);
 }
 
