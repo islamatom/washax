@@ -287,6 +287,7 @@ function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clea
 function majCred(){const e=document.getElementById('hcred');if(!e)return;e.textContent=S.credits;document.getElementById('hpSms').classList.toggle('bas',S.credits<20)}
 function recharge(n,p){S.credits+=n;majCred();toast('✅ Paiement accepté · +'+n+' SMS');vSms()}
 const PRIX={'Complet int. + ext.':89,'Intérieur':45,'Extérieur':39,'Remise à neuf':149,"Retour d'usine":199};
+function majF(){(S.formules||[]).forEach(f=>{PRIX[f.n]=f.prix;TYPES[f.n]=f.min})}
 function lienPay(rid){const r=R.find(x=>x.id===rid),c=getC(r.cid);if(!S.sumup){toast('Ajoutez d\'abord votre lien SumUp dans Réglages');go('reglages');return}const m=`Bonjour ${c.prenom}, voici le lien pour payer votre ${r.type} chez Washax (${PRIX[r.type]||''} €) : ${S.sumup} — Merci ! Washax`;window.open('https://wa.me/'+tel(c.tel).replace('+','')+'?text='+encodeURIComponent(m),'_blank')}
 const TYPES={'Complet int. + ext.':150,'Intérieur':60,'Extérieur':60,'Remise à neuf':180,"Retour d'usine":180};
 const HEURES=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
@@ -298,7 +299,9 @@ const S={
   nom:'Washax', photo:null, code:'0000', sumup:'', credits:0,
   acces:[{id:1,nom:'Patron',code:'0000',role:'tout'}],
   horaires:{1:['08:00','19:00'],2:['08:00','19:00'],3:['08:00','19:00'],4:['08:00','19:00'],5:['08:00','19:00'],6:['08:00','19:00'],0:null},
-  fermes:[ouvert(16)],
+  fermes:LIVE?[]:[ouvert(16)],
+  formules:[{n:'Complet int. + ext.',min:150,prix:89,on:true},{n:'Intérieur',min:60,prix:45,on:true},{n:'Extérieur',min:60,prix:39,on:true},{n:'Remise à neuf',min:180,prix:149,on:true},{n:"Retour d'usine",min:180,prix:199,on:true}],
+  extras:[{n:'Poils d’animaux',prix:15,min:30},{n:'Odeur neuve (désodorisant)',prix:5,min:0}],
   auto:{},autoBad:false,amende:{on:false,montant:25,delai:24},
   notif:{on:true,tel:'04XX XX XX XX'},relance:{on:true,h:24},
   histo:[{d:iso(addD(TODAY,-3)),t:'Promo hiver',n:7},{d:iso(addD(TODAY,-10)),t:'Rappel RDV · Sarah',n:1},{d:iso(addD(TODAY,-27)),t:'Promo intérieur',n:6}],
@@ -383,9 +386,9 @@ function render(){
 function carte(r,opts={}){const c=getC(r.cid);const [lab,cl]=ST[r.statut];
   const d=parse(r.date);
   let acts='';
-  const appel=`<div class="acts" style="margin-top:8px"><a class="b b-line b-sm" style="flex:1;text-decoration:none" href="tel:${tel(c.tel)}">☏ Appeler</a><a class="b b-line b-sm" style="flex:1;text-decoration:none;color:var(--ok)" target="_blank" href="https://wa.me/${tel(c.tel).replace('+','')}">WhatsApp</a></div><button class="b b-line b-sm" style="width:100%;margin-top:8px;color:var(--rose);border-color:var(--rose)" onclick="lienPay(${r.id})">💳 Envoyer le lien de paiement${PRIX[r.type]?' · '+PRIX[r.type]+' €':''}</button>`;
+  const appel=`<div class="acts" style="margin-top:8px"><a class="b b-line b-sm" style="flex:1;text-decoration:none" href="tel:${tel(c.tel)}">☏ Appeler</a><a class="b b-line b-sm" style="flex:1;text-decoration:none;color:var(--ok)" target="_blank" href="https://wa.me/${tel(c.tel).replace('+','')}">WhatsApp</a></div>`;
   if(r.statut==='attente')acts=`<div class="acts"><button class="b b-ok" onclick="valider(${r.id})">✓ Valider</button><button class="b b-soft" onclick="modifier(${r.id})">Modifier</button><button class="b b-bad" onclick="annuler(${r.id})">Refuser</button></div>${appel}`;
-  else if(r.statut==='confirme'&&r.date<T===false)acts=`<div class="acts">${r.date===T?`<button class="b b-ok b-sm" onclick="presence(${r.id},'venue')">Lavage fait</button><button class="b b-bad b-sm" onclick="presence(${r.id},'absente')">Pas là</button>`:''}<button class="b b-line b-sm" onclick="modifier(${r.id})">Modifier</button><button class="b b-line b-sm" onclick="annuler(${r.id})">Annuler</button><a class="b b-soft b-sm" href="tel:${tel(c.tel)}" style="text-decoration:none">☏ Appeler</a></div><button class="b b-line b-sm" style="width:100%;margin-top:8px;color:var(--rose);border-color:var(--rose)" onclick="lienPay(${r.id})">💳 Envoyer le lien de paiement${PRIX[r.type]?' · '+PRIX[r.type]+' €':''}</button>`;
+  else if(r.statut==='confirme'&&r.date<T===false)acts=`<div class="acts">${r.date===T?`<button class="b b-ok b-sm" onclick="presence(${r.id},'venue')">Lavage fait</button><button class="b b-bad b-sm" onclick="presence(${r.id},'absente')">Pas là</button>`:''}<button class="b b-line b-sm" onclick="modifier(${r.id})">Modifier</button><button class="b b-line b-sm" onclick="annuler(${r.id})">Annuler</button><a class="b b-soft b-sm" href="tel:${tel(c.tel)}" style="text-decoration:none">☏ Appeler</a></div>`;
   else acts=`<div class="acts"><a class="b b-soft b-sm" href="tel:${tel(c.tel)}" style="text-decoration:none">☏ Appeler</a></div>`;
   return `<div class="card"><div class="rdv-h">
     <div class="heure"><b>${r.heure}</b><small>${opts.jour?JC[d.getDay()]+' '+d.getDate():TYPES[r.type]+' min'}</small></div>
@@ -827,7 +830,16 @@ function vReglages(){
   <div class="card" style="display:flex;align-items:center;gap:16px"><div class="avatar" data-av style="width:84px;height:84px"></div>
     <div style="flex:1"><b style="font-family:'Cormorant Garamond';font-size:24px">${esc(S.nom)}</b><br><small style="color:var(--ink2)">Washax · Andenne</small><br>
     <button class="b b-soft b-sm" style="margin-top:8px" onclick="$('#photoIn').click()">Changer ma photo</button></div></div>
-  <div class="sous">Paiement SumUp</div><div class="card"><p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Collez votre lien de paiement SumUp. Sur chaque RDV, le bouton « 💳 Envoyer le lien de paiement » l'envoie au client par WhatsApp, avec le prix.</p><input class="inp" id="sumupIn" placeholder="https://pay.sumup.com/b2c/…" value="${esc(S.sumup||'')}" onchange="S.sumup=this.value.trim();toast(S.sumup?'Lien SumUp enregistré ✓':'Lien SumUp retiré')"><div style="font-size:12px;color:var(--ink2);margin-top:8px">Pas encore de lien ? Dans l'appli SumUp : Paiements → Liens de paiement.</div></div>
+  <div class="sous">Mes formules &amp; prix</div><div class="card"><p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Changez vos prix et durées : le site se met à jour tout seul.</p>
+    ${S.formules.map((f,i)=>`<div style="padding:10px 0;border-bottom:1px solid rgba(140,140,140,.22)"><div style="display:flex;align-items:center;gap:8px"><b style="flex:1">${esc(f.n)}</b><button class="tg ${f.on!==false?'on':''}" onclick="S.formules[${i}].on=S.formules[${i}].on===false;this.classList.toggle('on')"></button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px"><label style="font-size:12px;color:var(--ink2)">Prix (€)<input class="inp" type="number" min="0" value="${f.prix}" onchange="S.formules[${i}].prix=Math.max(0,+this.value||0);majF()"></label>
+      <label style="font-size:12px;color:var(--ink2)">Durée (min)<input class="inp" type="number" min="15" step="15" value="${f.min}" onchange="S.formules[${i}].min=Math.max(15,+this.value||60);majF()"></label></div></div>`).join('')}
+    <p style="font-size:12px;color:var(--ink2);margin-top:8px">Le bouton à droite cache une formule du site.</p></div>
+  <div class="sous">Options en plus</div><div class="card"><p style="font-size:13px;color:var(--ink2);margin-bottom:8px">Le client peut les ajouter à sa réservation (ex. poils d'animaux, parfum…).</p>
+    ${(S.extras||[]).map((x,i)=>`<div style="padding:10px 0;border-bottom:1px solid rgba(140,140,140,.22)"><div style="display:flex;gap:8px"><input class="inp" style="flex:1" value="${esc(x.n)}" placeholder="Nom de l'option" onchange="S.extras[${i}].n=this.value.trim().slice(0,40)"><button class="b b-line b-sm" onclick="S.extras.splice(${i},1);vReglages()">🗑</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px"><label style="font-size:12px;color:var(--ink2)">Prix en plus (€)<input class="inp" type="number" min="0" value="${x.prix}" onchange="S.extras[${i}].prix=Math.max(0,+this.value||0)"></label>
+      <label style="font-size:12px;color:var(--ink2)">Temps en plus (min)<input class="inp" type="number" min="0" step="15" value="${x.min||0}" onchange="S.extras[${i}].min=Math.max(0,+this.value||0)"></label></div></div>`).join('')}
+    <button class="b b-soft" style="width:100%;margin-top:10px" onclick="(S.extras=S.extras||[]).push({n:'Nouvelle option',prix:10,min:0});vReglages()">＋ Ajouter une option</button></div>
   <div class="sous">Mes horaires</div><div class="card">${[2,3,4,5,6,0,1].map(j=>{const h=S.horaires[j];return `<div class="set-row"><span class="j">${JL[j]}</span>
     ${h?`<input type="time" value="${h[0]}" onchange="S.horaires[${j}][0]=this.value"> – <input type="time" value="${h[1]}" onchange="S.horaires[${j}][1]=this.value">`:'<span style="color:var(--ink2);flex:1">Fermé</span>'}
     <button class="tg ${h?'on':''}" style="margin-left:auto" onclick="S.horaires[${j}]=S.horaires[${j}]?null:['10:00','18:00'];vReglages()"></button></div>`}).join('')}</div>
@@ -845,7 +857,7 @@ function vReglages(){
 
   ${vAcces()}
   <button class="b b-line" style="width:100%;margin-top:16px" onclick="LS.del('ra_jeton');LS.del('ra_acces');location.reload()">Se déconnecter</button>
-  <p class="demo-note" style="margin-top:18px">Panel réalisé par Atom · v3.2</p>`}
+  <p class="demo-note" style="margin-top:18px">Panel réalisé par Atom · v3.3</p>`}
 
 /* ================= FLEURS QUI TOMBENT ================= */
 (function(){const c=$('#fleurs'),x=c.getContext('2d');let W,H,dpr;
@@ -903,14 +915,14 @@ function RA_sync(){if(!LIVE||!JETON)return Promise.resolve();if(syncEnCours)retu
     .catch(()=>{$('#hors')&&($('#hors').hidden=false)}).finally(()=>{syncEnCours=null});return syncEnCours}
 async function RA_charger(){const d=await API('charger');if(!d.ok)throw new Error(d.erreur);
   C.length=0;R.length=0;d.C.forEach(c=>{c.amendes=c.amendes||[];C.push(c)});d.R.forEach(r=>R.push(r));
-  if(d.S){Object.keys(d.S).forEach(k=>{S[k]=d.S[k]})}
+  if(d.S){Object.keys(d.S).forEach(k=>{S[k]=d.S[k]})}majF();
   snapAll();if(!d.S)SNAP.S='';return d}
 const occupe=()=>$('#ov').classList.contains('open')||['INPUT','TEXTAREA','SELECT'].includes((document.activeElement||{}).tagName);
 async function RA_rafraichir(){if(!LIVE||!JETON||!$('#login').classList.contains('out'))return;await RA_sync();if(changements().n||occupe())return;
   const avant=R.filter(r=>r.statut==='attente').map(r=>r.id);const vieux=JSON.stringify([C,R]);
   try{await RA_charger()}catch(e){return}
   if(JSON.stringify([C,R])!==vieux){const nv=R.filter(r=>r.statut==='attente'&&!avant.includes(r.id));if(V!=='site'&&V!=='reglages'&&V!=='sms')render();else{const n=R.filter(r=>r.statut==='attente').length;$('#bdg').hidden=!n;$('#bdg').textContent=n}
-    if(nv.length){toast('✦ Nouvelle demande de '+((getC(nv[0].cid)||{}).prenom||'une client')+' !');coeurs(innerWidth/2,innerHeight*.35,40);if(navigator.vibrate)navigator.vibrate([40,60,40])}}}
+    if(nv.length){toast('🔔 Nouvelle demande de '+((getC(nv[0].cid)||{}).prenom||'un client')+' !');WX_alerte(nv.length,(getC(nv[0].cid)||{}).prenom)}}}
 if(LIVE){
   document.querySelectorAll('.demo-note').forEach(e=>e.remove());
   $('#login .hint').innerHTML='Tapez votre code ✦';
@@ -923,6 +935,32 @@ if(LIVE){
   const ac=LS.get('ra_acces');if(JETON&&ac){RA_charger().then(()=>{CUR=Object.assign({},S.acces.find(a=>a.id===ac.id)||ac);appliquerRole();$('#login').classList.add('out');render()}).catch(()=>{})}
 }
 render();
+</script>
+<script>
+/* ===== Washax en ligne : son, notifications, rappels de demain ===== */
+let WX_ctx=null;
+function WX_unlock(){try{WX_ctx=WX_ctx||new (window.AudioContext||window.webkitAudioContext)();if(WX_ctx.state==='suspended')WX_ctx.resume()}catch(e){}
+  if(LIVE&&'Notification' in window&&Notification.permission==='default'&&$('#login').classList.contains('out'))try{Notification.requestPermission()}catch(e){}}
+addEventListener('pointerdown',WX_unlock,{passive:true});
+function WX_bip(){try{WX_unlock();const c=WX_ctx,t=c.currentTime;[0,.22,.44,.9,1.12,1.34].forEach((d,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=i%3==2?1320:880;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(1,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.18);o.connect(g);g.connect(c.destination);o.start(t+d);o.stop(t+d+.2)})}catch(e){}}
+function WX_alerte(n,prenom,quoi){WX_bip();if(navigator.vibrate)navigator.vibrate([300,120,300,120,300]);
+  try{if('Notification' in window&&Notification.permission==='granted'){const t='🔔 Nouvelle demande Washax',b=(prenom?prenom+' veut':'Un client veut')+' un lavage'+(n>1?' (+'+(n-1)+' autre'+(n>2?'s':'')+')':'')+' · ouvrez votre panel';
+    navigator.serviceWorker&&navigator.serviceWorker.getRegistration?navigator.serviceWorker.getRegistration().then(r=>r?r.showNotification(t,{body:b,icon:'icone-192.png',vibrate:[300,120,300]}):new Notification(t,{body:b,icon:'icone-192.png'})).catch(()=>new Notification(t,{body:b,icon:'icone-192.png'})):new Notification(t,{body:b,icon:'icone-192.png'})}}catch(e){}
+  document.title='🔔 ('+n+') Washax';setTimeout(()=>document.title='Washax · Panel',15000)}
+function WX_cred(d){if(d&&typeof d.credits==='number'){S.credits=d.credits;try{SNAP.S=JSON.stringify(S)}catch(e){}majCred();if(V==='sms')vSms()}}
+const WX_tel=t=>{let x=String(t||'').replace(/\D/g,'');if(x.startsWith('00'))x=x.slice(2);if(x.startsWith('0'))x='32'+x.slice(1);return x};
+const WX_txtRappel=(r,c)=>`Bonjour ${c.prenom}, petit rappel : Washax passe demain ${fmtL(r.date)} à ${r.heure} pour laver votre voiture. Un empêchement ? Prévenez-nous. À demain ! Washax`;
+function WX_rappels(){const dem=iso(addD(TODAY,1));const L=R.filter(r=>r.date===dem&&r.statut==='confirme').sort((a,b)=>a.heure.localeCompare(b.heure));
+  return `<div class="sous">🔔 Rappels de demain</div><div class="card" style="padding:12px 14px">${L.length?`<p style="margin:0 0 8px;font-size:13px;color:var(--ink2)">Chaque client reçoit un rappel par e-mail automatiquement la veille à 18h. Vous pouvez aussi le renvoyer par WhatsApp ou SMS.</p>`+L.map(r=>{const c=getC(r.cid)||{};const m=r.rappel&&r.rappel.mail;const etat=m&&m!=='sans e-mail'?'<span style="color:var(--ok)">✉ e-mail envoyé</span>':m==='sans e-mail'?'<span style="color:var(--warn)">pas d’e-mail : envoyez-le par WhatsApp</span>':'<span style="color:var(--ink2)">✉ e-mail prévu à 18h</span>';
+    return `<div style="border-top:1px solid var(--blush);padding:10px 0"><b>${r.heure}</b> · ${esc(c.prenom)} ${esc(c.nom||'')} <small style="color:var(--ink2)">· ${esc(r.type)}</small><div style="font-size:12px;margin:3px 0 8px">${etat}${r.rappel&&r.rappel.wa?' · <span style="color:var(--ok)">WhatsApp ✓</span>':''}${r.rappel&&r.rappel.sms?' · <span style="color:var(--ok)">SMS ✓</span>':''}</div>
+    <div class="acts" style="margin:0"><a class="b b-sm" style="flex:1;text-decoration:none;background:#25D366;color:#fff" target="_blank" onclick="WX_marque(${r.id},'wa')" href="https://wa.me/${WX_tel(c.tel)}?text=${encodeURIComponent(WX_txtRappel(r,c))}">💬 WhatsApp</a><button class="b b-line b-sm" style="flex:1" onclick="WX_sms(${r.id})">✉ SMS (1 crédit)</button></div></div>`}).join(''):'<p style="margin:0;font-size:14px;color:var(--ink2)">Aucun rendez-vous confirmé demain.</p>'}</div>`}
+function WX_marque(id,k){const r=R.find(x=>x.id===id);if(!r)return;r.rappel=Object.assign({},r.rappel||{},{[k]:new Date().toISOString()});setTimeout(render,400)}
+function WX_sms(id){const r=R.find(x=>x.id===id),c=getC(r.cid);if(!LIVE){WX_marque(id,'sms');toast('SMS de rappel envoyé (aperçu)');return}
+  if((S.credits||0)<1)return toast('⚠ Plus de crédits SMS');
+  API('sms',{envois:[{tel:c.tel,texte:WX_txtRappel(r,c)}]}).then(d=>{WX_cred(d);if(d&&d.envoyes){WX_marque(id,'sms');toast('✓ SMS de rappel envoyé à '+c.prenom)}else toast('⚠ SMS non envoyé : '+((d&&(d.raison||d.erreur))||'erreur'))}).catch(()=>toast('⚠ Pas de connexion'))}
+const _vJourWX=vJour;vJour=function(){_vJourWX();const s=document.querySelector('#main .sous');if(s)s.insertAdjacentHTML('beforebegin',WX_rappels());else $('#main').insertAdjacentHTML('beforeend',WX_rappels())};
+if(LIVE&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
 </script>
 </body>
 </html>

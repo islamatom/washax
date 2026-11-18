@@ -24,16 +24,21 @@ function limite($cle, $max) { $f = sys_get_temp_dir() . '/wxa_' . md5($cle . ($_
   $t = array_filter(json_decode(@file_get_contents($f) ?: '[]', true) ?: [], fn($x) => $x > time() - 3600);
   if (count($t) >= $max) sortie(['ok' => false, 'erreur' => 'Trop de tentatives, réessayez plus tard'], 429); $t[] = time(); @file_put_contents($f, json_encode(array_values($t))); }
 function minutes($h) { [$a, $b] = array_map('intval', explode(':', $h . ':0')); return $a * 60 + $b; }
-function duree($t) { return DUREES[$t] ?? 150; }
+function formules($db) { $o = []; foreach ((array)($db['S']['formules'] ?? []) as $f) if (!empty($f['n'])) $o[$f['n']] = $f;
+  if (!$o) foreach (DUREES as $n => $m) $o[$n] = ['n' => $n, 'min' => $m, 'on' => true]; return $o; }
+function duree($t, $db = null) { $F = $db ? formules($db) : []; return (int)($F[$t]['min'] ?? DUREES[$t] ?? 150); }
+function dureeR($r, $db) { return duree($r['type'] ?? '', $db) + (int)($r['xmin'] ?? 0); }
 
 // ---------- lectures publiques (site) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $f = $_GET['f'] ?? '';
   $db = db_lire($DB_F);
   if ($f === 'pris') { $auj = date('Y-m-d'); $o = [];
-    foreach ($db['R'] as $r) if (in_array($r['statut'] ?? '', ['attente', 'confirme'], true) && ($r['date'] ?? '') >= $auj) $o[] = ['date' => $r['date'], 'heure' => $r['heure'], 'type' => $r['type'] ?? ''];
+    foreach ($db['R'] as $r) if (in_array($r['statut'] ?? '', ['attente', 'confirme'], true) && ($r['date'] ?? '') >= $auj) $o[] = ['date' => $r['date'], 'heure' => $r['heure'], 'type' => $r['type'] ?? '', 'min' => dureeR($r, $db)];
     $fer = array_values(array_filter((array)($db['S']['fermes'] ?? []), fn($d) => $d >= $auj));
-    sortie(['ok' => true, 'pris' => $o, 'fermes' => $fer, 'horaires' => $db['S']['horaires'] ?? null]); }
+    $fo = array_values(array_map(fn($f) => ['n' => $f['n'], 'min' => (int)($f['min'] ?? 60), 'prix' => $f['prix'] ?? null, 'on' => ($f['on'] ?? true) !== false], formules($db)));
+    $ex = array_values(array_map(fn($x) => ['n' => (string)$x['n'], 'prix' => (float)($x['prix'] ?? 0), 'min' => (int)($x['min'] ?? 0)], array_filter((array)($db['S']['extras'] ?? []), fn($x) => !empty($x['n']))));
+    sortie(['ok' => true, 'pris' => $o, 'fermes' => $fer, 'horaires' => $db['S']['horaires'] ?? null, 'formules' => $db['S']['formules'] ?? null ? $fo : null, 'extras' => isset($db['S']['extras']) ? $ex : null]); }
   if ($f === 'site') sortie($db['site'] ?: new stdClass());
   sortie(['ok' => false], 400);
 }
@@ -48,20 +53,23 @@ if ($f === 'demande') {
   $prenom = $txt('prenom', 40); $tel = $txt('tel', 30); $date = $in['date'] ?? ''; $heure = $in['heure'] ?? '';
   if (!$prenom || strlen(telN($tel)) < 9 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !preg_match('/^\d{2}:\d{2}$/', $heure) || $date <= date('Y-m-d') || (int)date('w', strtotime($date)) === 0)
     sortie(['ok' => false, 'erreur' => 'Demande incomplète'], 400);
-  $type = array_key_exists($in['type'] ?? '', DUREES) ? $in['type'] : 'Complet int. + ext.';
   $email = filter_var(trim($in['email'] ?? ''), FILTER_VALIDATE_EMAIL) ?: '—';
   [$h, $db] = db_ouvrir($DB_F);
+  $F = formules($db); $type = isset($F[$in['type'] ?? '']) ? $in['type'] : array_key_first($F);
+  $exOk = []; foreach ((array)($db['S']['extras'] ?? []) as $x) if (!empty($x['n'])) $exOk[$x['n']] = $x;
+  $ext = []; $xmin = 0; $xprix = 0; foreach (array_slice((array)($in['extras'] ?? []), 0, 10) as $n) if (isset($exOk[$n]) && !in_array($n, $ext, true)) { $ext[] = $n; $xmin += (int)($exOk[$n]['min'] ?? 0); $xprix += (float)($exOk[$n]['prix'] ?? 0); }
+  $prixTot = isset($F[$type]['prix']) ? ((float)$F[$type]['prix'] + $xprix) . ' €' : $txt('prix', 20);
   if (in_array($date, (array)($db['S']['fermes'] ?? []), true)) { db_fermer($h, $db); sortie(['ok' => false, 'erreur' => 'Washax est fermé ce jour-là, choisissez un autre jour']); }
-  $deb = minutes($heure); $fin = $deb + duree($type);
+  $deb = minutes($heure); $fin = $deb + duree($type, $db) + $xmin;
   foreach ($db['R'] as $r) if (($r['date'] ?? '') === $date && in_array($r['statut'] ?? '', ['attente', 'confirme'], true)) {
-    $d2 = minutes($r['heure'] ?? '0:0'); $f2 = $d2 + duree($r['type'] ?? '');
+    $d2 = minutes($r['heure'] ?? '0:0'); $f2 = $d2 + dureeR($r, $db);
     if ($deb < $f2 + TRAJET && $d2 < $fin + TRAJET) { db_fermer($h, $db); sortie(['ok' => false, 'erreur' => 'Ce créneau vient d’être pris, choisissez-en un autre']); } }
   $c = null; foreach ($db['C'] as &$x) if (telN($x['tel'] ?? '') === telN($tel)) { $c = &$x; break; } unset($x);
   if ($c === null) { $db['C'][] = ['id' => nid(), 'prenom' => $prenom, 'nom' => $txt('nom', 40), 'tel' => $tel, 'email' => $email, 'mariage' => '', 'statut' => 'normal', 'note' => '', 'notes' => '', 'par' => null, 'amendes' => []]; $cid = end($db['C'])['id']; }
   else { if ($email !== '—') $c['email'] = $email; $cid = $c['id']; }
-  $db['R'][] = ['id' => nid(), 'cid' => $cid, 'type' => $type, 'date' => $date, 'heure' => $heure, 'statut' => 'attente', 'src' => 'site', 'message' => $txt('message', 300), 'recu' => (int)(microtime(true) * 1000)];
+  $db['R'][] = ['id' => nid(), 'cid' => $cid, 'type' => $type, 'date' => $date, 'heure' => $heure, 'statut' => 'attente', 'src' => 'site', 'message' => $txt('message', 300) . ($ext ? ' · ➕ ' . implode(', ', $ext) : ''), 'extras' => $ext, 'xmin' => $xmin, 'prix' => $prixTot, 'recu' => (int)(microtime(true) * 1000)];
   db_fermer($h, $db);
-  $m = ['prenom' => $prenom, 'tel' => $tel, 'email' => $email !== '—' ? $email : '', 'formule' => $type, 'voiture' => $txt('voiture', 80), 'adresse' => $txt('adresse', 160), 'prix' => $txt('prix', 20), 'date' => $date, 'heure' => $heure];
+  $m = ['prenom' => $prenom, 'tel' => $tel, 'email' => $email !== '—' ? $email : '', 'formule' => $type . ($ext ? ' + ' . implode(', ', $ext) : ''), 'voiture' => $txt('voiture', 80), 'adresse' => $txt('adresse', 160), 'prix' => $prixTot, 'date' => $date, 'heure' => $heure];
   if ($m['email']) wx_mail('demande', $m);
   wx_mail('patron', $m);
   sortie(['ok' => true]);
