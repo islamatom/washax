@@ -10,7 +10,7 @@
 <link rel="canonical" href="https://washax.com/confidentialite.html">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="icon" type="image/png" href="icone-48.png"><link rel="apple-touch-icon" href="icone-180.png">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="polices/site.css" rel="stylesheet">
 <style>
 :root{--bg:#0a0a0a;--card:#141414;--txt:#f2f2f2;--sub:#a9a9a9;--or:#F37021;--line:#2a2a2a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -45,7 +45,7 @@ footer a{color:var(--sub)}
 <div class="intro">En bref : nous utilisons vos coordonnées uniquement pour organiser votre lavage (confirmer le rendez-vous, venir à la bonne adresse, vous rappeler la veille). Nous ne les vendons pas, nous ne faisons pas de publicité ciblée et le site n'utilise ni cookies publicitaires ni outil de mesure d'audience. Aucun paiement n'est fait en ligne.</div>
 
 <h2>1. Qui est responsable de vos données ?</h2>
-<p>Washax, service de lavage automobile à domicile en Belgique, est responsable du traitement de vos données personnelles collectées sur washax.com.</p>
+<p>Washax, service de lavage automobile à domicile en Belgique, est responsable du traitement de vos données personnelles collectées sur washax.com. Son identité complète (nom, adresse, numéro d'entreprise) figure dans les <a href="mentions-legales.html">mentions légales</a>.</p>
 <p>Contact pour toute question sur vos données : <a href="mailto:info@washax.com">info@washax.com</a></p>
 
 <h2>2. Quelles données collectons-nous ?</h2>
@@ -77,7 +77,7 @@ footer a{color:var(--sub)}
 <li><strong>Hostinger</strong> : hébergement du site, des réservations et de la messagerie e-mail ;</li>
 <li><strong>WhatsApp (Meta)</strong> : uniquement si Washax vous écrit par WhatsApp pour confirmer ou suivre votre rendez-vous ;</li>
 <li><strong>Brevo</strong> : uniquement si l'envoi de SMS est activé, pour vous envoyer un SMS lié à votre rendez-vous ;</li>
-<li><strong>Google Fonts</strong> : les polices d'écriture du site sont chargées depuis Google, qui reçoit à cette occasion l'adresse IP de votre appareil.</li>
+<li><strong>Unsplash</strong> : certaines photos d'illustration du site sont affichées depuis les serveurs d'Unsplash, qui reçoivent à cette occasion l'adresse IP de votre appareil (comme pour tout chargement d'image). Unsplash ne dépose pas de cookie via notre site.</li>
 </ul>
 <p>Le lien « Ajouter à mon agenda » présent dans les e-mails ouvre Google Agenda seulement si vous cliquez dessus. Certains de ces prestataires peuvent traiter des données hors de l'Union européenne ; ils s'appuient alors sur les garanties prévues par le RGPD (décision d'adéquation ou clauses contractuelles types).</p>
 <p>Vos données ne sont jamais vendues ni cédées à des tiers à des fins commerciales.</p>
@@ -89,8 +89,19 @@ footer a{color:var(--sub)}
 <li>Adresse IP utilisée contre les abus : environ une heure.</li>
 </ul>
 
-<h2>6. Ce qui est enregistré sur votre appareil</h2>
-<p>Le site n'utilise pas de cookies publicitaires ni de mesure d'audience. Il peut garder sur votre propre appareil (stockage local du navigateur) quelques informations pratiques, comme les réductions fidélité déjà utilisées. Ces informations ne nous sont pas envoyées et vous pouvez les effacer à tout moment depuis les réglages de votre navigateur.</p>
+<h2 id="cookies">6. Cookies et stockage sur votre appareil</h2>
+<p>Le site <strong>n'utilise aucun cookie publicitaire, aucun cookie de réseaux sociaux et aucun outil de mesure d'audience</strong> (pas de Google Analytics, pas de pixel Facebook). Les polices d'écriture sont hébergées directement sur washax.com, sans appel à Google.</p>
+<p>Le site enregistre seulement, dans le stockage local de votre navigateur, quelques informations strictement nécessaires à son fonctionnement :</p>
+<table>
+<thead><tr><th>Nom</th><th>À quoi ça sert</th><th>Durée</th></tr></thead>
+<tbody>
+<tr><td>wx_cookies</td><td>Se souvenir que vous avez fermé le bandeau d'information</td><td>Jusqu'à ce que vous l'effaciez</td></tr>
+<tr><td>wx_pu</td><td>Se souvenir des réductions fidélité déjà utilisées</td><td>Jusqu'à ce que vous l'effaciez</td></tr>
+<tr><td>Autres « wx_… »</td><td>Fonctionnement de l'espace de gestion réservé à Washax (rendez-vous, réglages, connexion)</td><td>Jusqu'à ce que vous l'effaciez</td></tr>
+</tbody>
+</table>
+<p>Ces éléments sont exemptés de consentement car ils sont indispensables au service que vous demandez (article 129 de la loi belge du 13 juin 2005 sur les communications électroniques). Ils ne nous sont pas envoyés et vous pouvez les effacer à tout moment dans les réglages de votre navigateur (« Effacer les données du site »).</p>
+<p>Si un outil soumis à consentement était ajouté un jour, il ne serait activé qu'après votre accord explicite, et cette page serait mise à jour.</p>
 
 <h2>7. Vos droits</h2>
 <p>Vous pouvez à tout moment demander à :</p>
@@ -110,6 +121,7 @@ footer a{color:var(--sub)}
 <h2>9. Modifications</h2>
 <p>Cette page peut évoluer, par exemple si un nouveau service est ajouté. La date de dernière mise à jour figure en haut de la page.</p>
 </main>
-<footer><a href="/">← Retour à washax.com</a> · <a href="mailto:info@washax.com">info@washax.com</a></footer>
+<footer><a href="/">← Retour à washax.com</a> · <a href="mentions-legales.html">Mentions légales</a> · <a href="mailto:info@washax.com">info@washax.com</a></footer>
+<script src="rgpd.js"></script>
 </body>
 </html>
